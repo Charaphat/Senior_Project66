@@ -103,7 +103,9 @@ class RNN(nn.Module):
 
 def train_one_epoch():
   model.train(True)
+  print()
   print(f'Epoch: {epoch + 1}')
+  print(f'Training Size: {len(X_train)}, Batch Size: {batch_size}')
   running_loss = 0.0
   for batch_index, batch in enumerate(train_loader):
     x_batch, y_batch = batch[0].to(device), batch[1].to(device)
@@ -113,10 +115,9 @@ def train_one_epoch():
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-
-    if batch_index % 100 == 99:
-      avg_loss_across_batches = running_loss / 100
-      print('Batch {0}, Loss: {1:.2f}'.format(batch_index+1, avg_loss_across_batches))
+    if batch_index == (len(X_train) // batch_size)-1:
+      avg_loss_across_batches = running_loss / (len(X_train) // batch_size)
+      print('Training Loss: {:.2f}'.format(avg_loss_across_batches))
       running_loss = 0.0
   checkpoint = {
     'epoch': epoch + 1,
@@ -126,7 +127,6 @@ def train_one_epoch():
   checkpoint_path = f'models/epoch{epoch+1}.pt'
   if epoch % 100 == 99:
     torch.save(checkpoint, checkpoint_path)
-  print()
 
 def validate_one_epoch():
   model.train(False)
@@ -168,7 +168,7 @@ y_test = torch.tensor(y_test).float()
 train_dataset = TimeSeriesDataset(X_train, y_train)
 test_dataset = TimeSeriesDataset(X_test, y_test)
 
-batch_size = 2048
+batch_size = 500
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
