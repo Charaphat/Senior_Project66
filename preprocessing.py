@@ -51,6 +51,11 @@ for index, value in enumerate(global_solar_radiation.data.iloc[:,1]):
     if value > 3600:
         global_solar_radiation_drop_index.append(index)
 
+precipitation_drop_index = []
+for index, value in enumerate(precipitation.data.iloc[:,1]):
+    if value > 9:
+        precipitation_drop_index.append(index)
+
 # Preprocessing in Tranformer temperature filter condition more than 70 until it reach to less than 55 again
 # Drop index 16800 to 17200 because Transformer was maintained
 start_index = None
@@ -72,7 +77,7 @@ for i, value in enumerate(transformer_temperature.data.iloc[:,1]):
         transformer_temperature_drop_index.append(i)
 
 # Union all index that was prepared to drop in dataframe
-all_null_lines_set = set(global_solar_radiation_drop_index) | set(transformer_temperature_drop_index) | set(air_temperature.null_lines) | set(global_solar_radiation.null_lines) | set(precipitation.null_lines) | set(wind_direction.null_lines) | set(wind_speed.null_lines) | set(load_condition.null_lines) | set(load_condition_drop_index)
+all_null_lines_set = set(precipitation_drop_index) | set(global_solar_radiation_drop_index) | set(transformer_temperature_drop_index) | set(air_temperature.null_lines) | set(global_solar_radiation.null_lines) | set(precipitation.null_lines) | set(wind_direction.null_lines) | set(wind_speed.null_lines) | set(load_condition.null_lines) | set(load_condition_drop_index)
 all_null_lines = list(all_null_lines_set)
 all_null_lines.sort(reverse=True)
 

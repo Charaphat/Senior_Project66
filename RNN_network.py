@@ -118,6 +118,14 @@ def train_one_epoch():
       avg_loss_across_batches = running_loss / 100
       print('Batch {0}, Loss: {1:.2f}'.format(batch_index+1, avg_loss_across_batches))
       running_loss = 0.0
+  checkpoint = {
+    'epoch': epoch + 1,
+    'state_dict': model.state_dict(),
+    'optimizer': optimizer.state_dict(),
+  }
+  checkpoint_path = f'models/epoch{epoch+1}.pt'
+  if epoch % 100 == 99:
+    torch.save(checkpoint, checkpoint_path)
   print()
 
 def validate_one_epoch():
@@ -133,6 +141,7 @@ def validate_one_epoch():
   print('Val Loss: {0:.2f}'.format(avg_loss_across_batches))
   print('***************************************************')
   print()
+
 
 dataset = DataProcessing('dataset/full_data.csv', "data")
 
@@ -159,15 +168,15 @@ y_test = torch.tensor(y_test).float()
 train_dataset = TimeSeriesDataset(X_train, y_train)
 test_dataset = TimeSeriesDataset(X_test, y_test)
 
-batch_size = 4
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+batch_size = 2048
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-model = biLSTM(1, 150, 3)
+model = LSTM(1, 100, 2)
 model.to(device)
 
 learning_rate = 0.0001
-num_epochs = 15
+num_epochs = 30000
 loss_function = nn.HuberLoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
@@ -179,7 +188,7 @@ with torch.no_grad():
   predicted = model(X_test.to(device)).to('cpu').numpy()
 
 # Save Figure
-output_dir = 'LSTM_test'
+output_dir = 'LSTM'
 
 os.makedirs(output_dir, exist_ok=True)
 

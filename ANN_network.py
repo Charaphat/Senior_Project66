@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import os
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
 device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.manual_seed(42)
 
@@ -74,7 +74,7 @@ y_test = torch.tensor(y_test).float()
 X_train, y_train = X_train.to(device), y_train.to(device)
 X_test, y_test = X_test.to(device), y_test.to(device)
 
-epochs = 370
+epochs = 500
 learning_rate = 0.01
 
 model = ANN().to(device)
@@ -110,18 +110,19 @@ output_dir = 'ANN'
 os.makedirs(output_dir, exist_ok=True)
 
 for i in range(0, len(predicted), 200):
+  plt.figure(figsize=(12, 9))
   plt.clf()
-  print(i)
-  plt.plot(y_test[i:i+200,:],label='Actual')
-  plt.plot(predicted[i:i+200,:],label="Predicted")
+  plt.scatter(range(len(y_test[i:i+200,:])),y_test[i:i+200,:],label='Actual', color = 'blue', s=4)
+  #plt.scatter(range(len(predicted[i:i+200,:])),predicted[i:i+200,:],label="Predicted")
+  #plt.plot(y_test[i:i+200,:],label='Actual')
+  plt.plot(predicted[i:i+200,:],label="Predicted", color='orange')
+  plt.plot(abs(y_test[i:i+200,:] - predicted[i:i+200,:]), label="MAE loss", color='green')
   plt.xlabel("Hours")
   plt.ylabel("Temperature")
   plt.legend()
   filename = os.path.join(output_dir, f'hour{i}.png')
   plt.savefig(filename)
 
-# Clean up: Close all figures
 plt.close('all')
-mse = mean_squared_error(y_test, predicted)
-print(mse)
-
+mae = mean_absolute_error(y_test,predicted)
+print(mae)
