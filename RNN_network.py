@@ -66,7 +66,6 @@ class biLSTM(nn.Module):
     out = self.fc(out[:, -1, :])
     return out
 
-
 class GRU(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim):
         super(GRU, self).__init__()
@@ -103,9 +102,8 @@ class RNN(nn.Module):
 
 def train_one_epoch():
   model.train(True)
-  print()
   print(f'Epoch: {epoch + 1}')
-  print(f'Training Size: {len(X_train)}, Batch Size: {batch_size}')
+  #print(f'Training Size: {len(X_train)}, Batch Size: {batch_size}')
   running_loss = 0.0
   for batch_index, batch in enumerate(train_loader):
     x_batch, y_batch = batch[0].to(device), batch[1].to(device)
@@ -117,6 +115,7 @@ def train_one_epoch():
     optimizer.step()
     if batch_index == (len(X_train) // batch_size)-1:
       avg_loss_across_batches = running_loss / (len(X_train) // batch_size)
+      training_loss_array.append(avg_loss_across_batches)
       print('Training Loss: {:.2f}'.format(avg_loss_across_batches))
       running_loss = 0.0
   checkpoint = {
@@ -125,7 +124,7 @@ def train_one_epoch():
     'optimizer': optimizer.state_dict(),
   }
   checkpoint_path = f'models/epoch{epoch+1}.pt'
-  if epoch % 100 == 99:
+  if epoch % checkpoint_epoch == checkpoint_epoch-1:
     torch.save(checkpoint, checkpoint_path)
 
 def validate_one_epoch():
@@ -138,11 +137,15 @@ def validate_one_epoch():
       loss = loss_function(output, y_batch)
       running_loss += loss.item()
   avg_loss_across_batches = running_loss / len(test_loader)
+  val_loss_array.append(avg_loss_across_batches)
   print('Val Loss: {0:.2f}'.format(avg_loss_across_batches))
+  print()
   print('***************************************************')
   print()
 
 
+training_loss_array = []
+val_loss_array = []
 dataset = DataProcessing('dataset/full_data.csv', "data")
 
 X = dataset.data.iloc[:,:6]
@@ -165,47 +168,41 @@ X_test = torch.tensor(X_test).float()
 y_train = torch.tensor(y_train).float()
 y_test = torch.tensor(y_test).float()
 
+
 train_dataset = TimeSeriesDataset(X_train, y_train)
 test_dataset = TimeSeriesDataset(X_test, y_test)
 
-batch_size = 500
+batch_size = 100
+num_epochs = 3000
+learning_rate = 0.0001
+checkpoint_epoch = 5
+
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 model = LSTM(1, 100, 2)
 model.to(device)
 
-learning_rate = 0.0001
-num_epochs = 30000
 loss_function = nn.HuberLoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+
+model_name = type(model).__name__
+output_dir = f'models/{model_name}'
+if os.path.exists(output_dir):
+  i = 1
+  while True:
+    new_output_dir = f'{output_dir}_{i}'
+    if not os.path.exists(new_output_dir):
+      output_dir = new_output_dir
+      break
+    i += 1
+os.makedirs(output_dir, exist_ok=True)
 
 for epoch in range(num_epochs):
   train_one_epoch()
   validate_one_epoch()
 
-with torch.no_grad():
-  predicted = model(X_test.to(device)).to('cpu').numpy()
+print(training_loss_array)
+print(val_loss_array)
 
-# Save Figure
-output_dir = 'LSTM'
 
-os.makedirs(output_dir, exist_ok=True)
-
-for i in range(0, len(predicted), 200):
-  plt.figure(figsize=(12, 9))
-  plt.clf()
-  plt.scatter(range(len(y_test[i:i+200,:])),y_test[i:i+200,:],label='Actual', color = 'blue', s=4)
-  #plt.scatter(range(len(predicted[i:i+200,:])),predicted[i:i+200,:],label="Predicted")
-  #plt.plot(y_test[i:i+200,:],label='Actual')
-  plt.plot(predicted[i:i+200,:],label="Predicted", color='orange')
-  plt.plot(abs(y_test[i:i+200,:] - predicted[i:i+200,:]), label="MAE loss", color='green')
-  plt.xlabel("Hours")
-  plt.ylabel("Temperature")
-  plt.legend()
-  filename = os.path.join(output_dir, f'hour{i}.png')
-  plt.savefig(filename)
-
-plt.close('all')
-mae = mean_absolute_error(y_test,predicted)
-print(mae)
