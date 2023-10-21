@@ -173,7 +173,7 @@ train_dataset = TimeSeriesDataset(X_train, y_train)
 test_dataset = TimeSeriesDataset(X_test, y_test)
 
 batch_size = 100
-num_epochs = 3000
+num_epochs = 50
 learning_rate = 0.0001
 checkpoint_epoch = 5
 
@@ -186,11 +186,6 @@ model.to(device)
 loss_function = nn.HuberLoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-"""
-model_path = "models"
-if not os.path.exists(model_path):
-  os.makedirs(model_path)
-"""
 model_name = type(model).__name__
 output_dir = f'models/{model_name}'
 if os.path.exists(output_dir):
@@ -203,16 +198,22 @@ if os.path.exists(output_dir):
     i += 1
 os.makedirs(output_dir+"/weights", exist_ok=True)
 
-"""
-weight_path = f"models/{output_dir}/weights"
-if not os.path.exists(weight_path):
-  os.makedirs(weight_path)
-"""
 for epoch in range(num_epochs):
   train_one_epoch()
   validate_one_epoch()
 
-print(training_loss_array)
-print(val_loss_array)
+print(output_dir)
 
+fig1, ax1 = plt.subplots(1, 2)
+ax1[0].plot(training_loss_array)
+ax1[0].set_title("Training Loss")
+ax1[1].plot(val_loss_array)
+ax1[1].set_title("Validation Loss")
 
+ax1[0].set_xlabel("Epochs")
+ax1[0].set_ylabel("Loss")
+ax1[1].set_xlabel("Epochs")
+ax1[1].set_ylabel("Loss")
+
+save_fig_loss_path = f"{output_dir}/Loss.png"
+plt.savefig(save_fig_loss_path)
