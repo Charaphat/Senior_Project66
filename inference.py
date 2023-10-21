@@ -24,7 +24,24 @@ class LSTM(nn.Module):
     out = self.fc(out[:, -1, :])
     return out
 
-dataset = pd.read_csv('inference.csv')
+class RNN(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim):
+        super(RNN, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.layer_dim = layer_dim
+        self.rnn = nn.RNN(
+            input_dim, hidden_dim, layer_dim, batch_first=True, dropout=0.4
+        )
+        self.fc = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x):
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        out, h0 = self.rnn(x, h0.detach())
+        out = out[:, -1, :]
+        out = self.fc(out)
+        return out
+
+dataset = pd.read_csv('dataset/inference.csv')
 X_test = dataset.iloc[:,:6].to_numpy()
 y_test = dataset.iloc[:,6].to_numpy()
 
@@ -34,8 +51,8 @@ y_test = y_test.reshape((-1, 1))
 X_test = torch.tensor(X_test).float()
 y_test = torch.tensor(y_test).float()
 
-loaded_model = torch.load('models/epoch1800.pt')
-model = LSTM(1,100,2)
+loaded_model = torch.load('models/RNN/weights/epoch1000.pt')
+model = RNN(1,100,2)
 model.load_state_dict(loaded_model['state_dict'])
 model.to(device)
 model.eval()

@@ -9,7 +9,7 @@ from sklearn.metrics import mean_absolute_error
 import os
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-torch.manual_seed(42)
+#torch.manual_seed(42)
 
 class DataProcessing:
   def __init__(self, path, data):
@@ -173,9 +173,9 @@ train_dataset = TimeSeriesDataset(X_train, y_train)
 test_dataset = TimeSeriesDataset(X_test, y_test)
 
 batch_size = 100
-num_epochs = 50
+num_epochs = 1000
 learning_rate = 0.0001
-checkpoint_epoch = 5
+checkpoint_epoch = 10
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
