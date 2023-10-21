@@ -13,6 +13,22 @@ class DataProcessing:
   def read_csv(self):
     self.data = pd.read_csv(self.path)
 
+def scatter_plot(x1, y1, label1, color1, size1, x2, y2, label2, color2, size2, xlabel, ylabel):
+  plt.scatter(x1, y1, label=label1, color=color1, s=size1)
+  plt.scatter(x2, y2, label=label2, color=color2, s=size2)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
+  plt.legend()
+
+def line_plot(y, label, color, y2, label2, color2, xlabel, ylabel):
+  plt.plot(y1, label=label1, color=color1)
+  plt.plot(y2, label=label2, color=color2)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
+  plt.legend()
+
+
+
 """
 air_temperature = DataProcessing("dataset/Air_temperature.csv", 'air_temperature')
 global_solar_radiation = DataProcessing("dataset/Global_solar_radiation.csv", "global_solar_radiation")

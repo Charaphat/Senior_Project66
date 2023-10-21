@@ -51,7 +51,6 @@ os.makedirs(output_dir, exist_ok=True)
 for i in range(0, len(predicted), 200):
   plt.figure(figsize=(12, 9))
   plt.clf()
-
   #plt.scatter(range(len(y_test[i:i+200,:])),y_test[i:i+200,:],label='Actual', color = 'blue', s=4)
   #plt.scatter(range(len(predicted[i:i+200,:])),predicted[i:i+200,:],label="Predicted", color = 'red', s=4)
   plt.plot(y_test[i:i+200,:],label='Actual', color='blue')

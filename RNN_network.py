@@ -123,7 +123,7 @@ def train_one_epoch():
     'state_dict': model.state_dict(),
     'optimizer': optimizer.state_dict(),
   }
-  checkpoint_path = f'models/epoch{epoch+1}.pt'
+  checkpoint_path = f'{output_dir}/weights/epoch{epoch+1}.pt'
   if epoch % checkpoint_epoch == checkpoint_epoch-1:
     torch.save(checkpoint, checkpoint_path)
 
@@ -180,12 +180,17 @@ checkpoint_epoch = 5
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-model = LSTM(1, 100, 2)
+model = RNN(1, 100, 2)
 model.to(device)
 
 loss_function = nn.HuberLoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
+"""
+model_path = "models"
+if not os.path.exists(model_path):
+  os.makedirs(model_path)
+"""
 model_name = type(model).__name__
 output_dir = f'models/{model_name}'
 if os.path.exists(output_dir):
@@ -196,8 +201,13 @@ if os.path.exists(output_dir):
       output_dir = new_output_dir
       break
     i += 1
-os.makedirs(output_dir, exist_ok=True)
+os.makedirs(output_dir+"/weights", exist_ok=True)
 
+"""
+weight_path = f"models/{output_dir}/weights"
+if not os.path.exists(weight_path):
+  os.makedirs(weight_path)
+"""
 for epoch in range(num_epochs):
   train_one_epoch()
   validate_one_epoch()
