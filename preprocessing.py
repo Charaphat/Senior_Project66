@@ -84,10 +84,10 @@ all_null_lines.sort(reverse=True)
 # Combine all data to the same dataframe
 X = pd.DataFrame(air_temperature.data.iloc[:,1])
 X["Global_solar_radiation"] = global_solar_radiation.data.iloc[:,1]
+X["Load_condition"] = load_condition.data.iloc[:,1]
 X["Precipitation"] = precipitation.data.iloc[:,1]
 X["Wind_speed"] = wind_speed.data.iloc[:,1]
 X["Wind_direction"] = wind_direction.data.iloc[:,1]
-X["Load_condition"] = load_condition.data.iloc[:,1]
 X["Transformer_temperature"] = transformer_temperature.data.iloc[:,1]
 
 # check null and missing value in dataframe before filter

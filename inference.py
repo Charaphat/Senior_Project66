@@ -9,6 +9,23 @@ from sklearn.metrics import mean_absolute_error
 import os
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+class GRU(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim):
+        super(GRU, self).__init__()
+        self.layer_dim = layer_dim
+        self.hidden_dim = hidden_dim
+        self.gru = nn.GRU(
+            input_dim, hidden_dim, layer_dim, batch_first=True, dropout=0.4
+        )
+        self.fc = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x):
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        out, _ = self.gru(x, h0.detach())
+        out = out[:, -1, :]
+        out = self.fc(out)
+        return out
+
 class LSTM(nn.Module):
   def __init__(self, input_size, hidden_size, num_stacked_layers):
     super().__init__()
@@ -51,8 +68,8 @@ y_test = y_test.reshape((-1, 1))
 X_test = torch.tensor(X_test).float()
 y_test = torch.tensor(y_test).float()
 
-loaded_model = torch.load('models/RNN/weights/epoch1000.pt')
-model = RNN(1,100,2)
+loaded_model = torch.load('models/LSTM/weights/epoch8000.pt')
+model = LSTM(1,100,2)
 model.load_state_dict(loaded_model['state_dict'])
 model.to(device)
 model.eval()
@@ -62,7 +79,7 @@ with torch.no_grad():
 
 # Save Figure
 output_dir = 'LSTM'
-
+"""
 os.makedirs(output_dir, exist_ok=True)
 
 for i in range(0, len(predicted), 200):
@@ -82,6 +99,8 @@ for i in range(0, len(predicted), 200):
   plt.savefig(filename)
 
 plt.close('all')
+"""
+
 mae = mean_absolute_error(y_test,predicted)
 print(mae)
 
