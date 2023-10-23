@@ -78,7 +78,8 @@ y_test = y_test.reshape((-1, 1))
 X_test = torch.tensor(X_test).float()
 y_test = torch.tensor(y_test).float()
 
-loaded_model = torch.load('models/LSTM/weights/epoch8500.pt')
+loaded_epoch = "epoch8500"
+loaded_model = torch.load(f'models/LSTM/weights/{loaded_epoch}.pt')
 
 model = LSTM(1,100,2)
 
@@ -89,38 +90,42 @@ model.eval()
 with torch.no_grad():
   predicted = model(X_test.to(device)).to('cpu').numpy()
 
-# Save Figure
-output_dir = 'LSTM'
-"""
-os.makedirs(output_dir, exist_ok=True)
-
-for i in range(0, len(predicted), 200):
-  plt.figure(figsize=(12, 9))
-  plt.clf()
-  #plt.scatter(range(len(y_test[i:i+200,:])),y_test[i:i+200,:],label='Actual', color = 'blue', s=4)
-  #plt.scatter(range(len(predicted[i:i+200,:])),predicted[i:i+200,:],label="Predicted", color = 'red', s=4)
-  plt.plot(y_test[i:i+200,:],label='Actual', color='blue')
-  plt.plot(predicted[i:i+200,:],label="Predicted", color='orange')
-  plt.plot(abs(y_test[i:i+200,:] - predicted[i:i+200,:]), label="MAE loss", color='green')
-
-  plt.xlabel("Hours")
-  plt.ylabel("Temperature")
-  plt.legend()
-
-  filename = os.path.join(output_dir, f'hour{i}.png')
-  plt.savefig(filename)
-
-plt.close('all')
-"""
-
-mae = mean_absolute_error(y_test,predicted)
-
 difference = 0
 
 for i in range(len(y_test)):
     difference += (abs(y_test[i].to('cpu').numpy() - predicted[i]) / y_test[i].to('cpu').numpy()) * 100
 
-accuracy = difference[0] / len(y_test)
+mae = mean_absolute_error(y_test,predicted)
+accuracy = 100 - (difference[0] / len(y_test))
+
+result = f"Accuracy: {accuracy:.2f}%, MAE: {mae:.2f} degree celsius"
+desc = f"Transformer temperature prediction with parameter from {loaded_epoch}"
+
+output_dir = 'LSTM'
+os.makedirs(output_dir, exist_ok=True)
+
+divider = 400
+n = len(predicted) // divider
+
+for i in range(n):
+    plt.figure(figsize=(12, 6))
+    plt.clf()
+
+    plt.plot(range(i * divider, (i+1) * divider), y_test[i * divider:(i * divider) + divider], label='Actual', color='blue')
+    plt.plot(range(i * divider, (i+1) * divider), predicted[i * divider:(i * divider) + divider], label='Predicted', color='orange')
+    plt.plot(range(i * divider, (i+1) * divider), abs(y_test[i * divider:(i * divider) + divider] - predicted[i * divider:(i * divider) + divider]), label="MAE loss", color='green')
+
+    plt.figtext(0.42, 0.95, desc, horizontalalignment = "center",  verticalalignment = "center", wrap = True, fontsize = 13, weight = "bold" ,color = "black", bbox={"facecolor":"yellow", "alpha":0.5, "pad":5})
+    plt.figtext(0.30, 0.9, result, horizontalalignment = "center",  verticalalignment = "center", wrap = True, fontsize = 11,  color ="black")
+
+    plt.xlabel("Hours")
+    plt.ylabel("Temperature")
+    plt.legend()
+
+    filename = os.path.join(output_dir, f'figure{i+1}.png')
+    plt.savefig(filename)
+
+plt.close('all')
 
 print(f"mean absolute error: {mae}")
 print(f"accuracy: {100-accuracy}")
