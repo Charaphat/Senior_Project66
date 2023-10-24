@@ -30,6 +30,7 @@ class TimeSeriesDataset(Dataset):
 class LSTM(nn.Module):
       def __init__(self, input_size, hidden_size, num_stacked_layers):
           super().__init__()
+          self.input_size = input_size
           self.hidden_size = hidden_size
           self.num_stacked_layers = num_stacked_layers
           self.lstm = nn.LSTM(input_size, hidden_size, num_stacked_layers, dropout=0.4, batch_first=True)
@@ -45,6 +46,7 @@ class LSTM(nn.Module):
 class biLSTM(nn.Module):
       def __init__(self, input_size, hidden_size, num_stacked_layers):
           super().__init__()
+          self.input_size = input_size
           self.hidden_size = hidden_size
           self.num_stacked_layers = num_stacked_layers
           self.lstm = nn.LSTM(input_size, hidden_size, num_stacked_layers, dropout=0.4, batch_first=True, bidirectional=True)
@@ -58,12 +60,13 @@ class biLSTM(nn.Module):
           return out
 
 class GRU(nn.Module):
-      def __init__(self, input_dim, hidden_dim, layer_dim):
+      def __init__(self, input_size, hidden_size, num_stacked_layers):
           super(GRU, self).__init__()
-          self.layer_dim = layer_dim
-          self.hidden_dim = hidden_dim
-          self.gru = nn.GRU(input_dim, hidden_dim, layer_dim, batch_first=True, dropout=0.4)
-          self.fc = nn.Linear(hidden_dim, 1)
+          self.input_size = input_size
+          self.hidden_size = hidden_size
+          self.num_stacked_layers = num_stacked_layers
+          self.gru = nn.GRU(input_size, hidden_size, num_stacked_layers, batch_first=True, dropout=0.4)
+          self.fc = nn.Linear(hidden_size, 1)
       def forward(self, x):
           h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
           out, _ = self.gru(x, h0.detach())
@@ -72,12 +75,13 @@ class GRU(nn.Module):
           return out
 
 class RNN(nn.Module):
-      def __init__(self, input_dim, hidden_dim, layer_dim):
+      def __init__(self, input_size, hidden_size, num_stacked_layers):
           super(RNN, self).__init__()
-          self.hidden_dim = hidden_dim
-          self.layer_dim = layer_dim
-          self.rnn = nn.RNN(input_dim, hidden_dim, layer_dim, batch_first=True, dropout=0.4)
-          self.fc = nn.Linear(hidden_dim, 1)
+          self.input_size = input_size
+          self.hidden_size = hidden_size
+          self.num_stacked_layers = num_stacked_layers
+          self.rnn = nn.RNN(input_size, hidden_size, num_stacked_layers, batch_first=True, dropout=0.4)
+          self.fc = nn.Linear(hidden_size, 1)
       def forward(self, x):
           h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
           out, h0 = self.rnn(x, h0.detach())
@@ -105,6 +109,9 @@ def train_one_epoch():
     checkpoint = { 'epoch': epoch + 1,
                    'state_dict': model.state_dict(),
                    'optimizer': optimizer.state_dict(),
+                   'model_info': model_info,
+                   'train_loss': training_loss_array,
+                   'val_loss': val_loss_array,
                   }
     checkpoint_path = f'{output_dir}/weights/epoch{epoch+1}.pt'
     if epoch % checkpoint_epoch == checkpoint_epoch-1:
@@ -154,14 +161,14 @@ train_dataset = TimeSeriesDataset(X_train, y_train)
 test_dataset = TimeSeriesDataset(X_test, y_test)
 
 batch_size = 512
-num_epochs = 20000
+num_epochs = 10
 learning_rate = 0.0001
-checkpoint_epoch = 500
+checkpoint_epoch = 1
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-model = RNN(1, 100, 2)
+model = LSTM(1, 100, 2)
 model.to(device)
 
 loss_function = nn.HuberLoss()
@@ -169,6 +176,10 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
 model_name = type(model).__name__
 output_dir = f'models/{model_name}'
+
+model_info = f"{model_name}({model.input_size}, {model.hidden_size}, {model.num_stacked_layers})"
+print(model_info)
+
 if os.path.exists(output_dir):
    i = 1
    while True:
@@ -206,5 +217,6 @@ plt.tight_layout()
 
 save_fig_loss_path = f"{output_dir}/Loss.png"
 plt.savefig(save_fig_loss_path)
+
 
 
